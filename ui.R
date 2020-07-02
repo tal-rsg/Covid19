@@ -18,7 +18,7 @@ library(plotly)
 
         navbarPage(
             theme = shinytheme("darkly"),  # <--- To use a theme, uncomment this
-            "COVID-19 on World highlight Brazil",
+            "COVID-19 on World highlight Rio",
             tabPanel("Confirmed",
                      mainPanel(
                          tabsetPanel(

@@ -50,7 +50,7 @@ df_rj_tot <- df_rj_fil %>%
     rename(CD_GEOCMU = city_ibge_code) %>% 
     mutate(CD_GEOCMU = CD_GEOCMU %>% as_factor())
 
-df_trps_conf <- df_rj %>% 
+df_trps_conf <- df_1 %>% 
     filter(city %in% c("Três Rios", "Paraíba do Sul")) %>% 
     mutate(Diario = lag(last_available_confirmed),
            Conf_daily=last_available_confirmed-Diario)
@@ -61,19 +61,19 @@ df_trps_conf <- df_rj %>%
 
 sf_rj <- st_read("data/rj_municipios/33MUE250GC_SIR.shp")
 
-df_rj_tot %>%  glimpse()
+#df_rj_tot %>%  glimpse()
 
-sf_rj %>% glimpse()
+#sf_rj %>% glimpse()
 
 sf_plot <- df_rj_tot %>% 
   left_join(sf_rj, by = "CD_GEOCMU") %>% 
   st_as_sf()
 
-#pop <- str_glue("<b>Municipio:</b> {sf_plot$Municipio} <br/>
-#                <b>Confirmados:</b> {sf_plot$Confirmados} <br/>
-#                <b>Mortes:</b> {sf_plot$Mortes} <br/>")
+pop <- str_glue("<b>Municipio:</b> {sf_plot$Municipio} <br/>
+                <b>Confirmados:</b> {sf_plot$Confirmados} <br/>
+                <b>Mortes:</b> {sf_plot$Mortes} <br/>")
 
-#fill <- colorQuantile("YlOrRd", sf_plot$Confirmados, n=7)
+fill <- colorQuantile("YlOrRd", sf_plot$Confirmados, n=7)
 
 base_map <- sf_plot %>%
   leaflet() %>%
@@ -88,7 +88,7 @@ base_map <- sf_plot %>%
                                                   bringToFront = TRUE))
 #sf_plot %>% glimpse()
 
-base_map
+#base_map
 
 
 #lendo arquivos mundiais
@@ -227,8 +227,8 @@ shinyServer(function(input, output) {
     output$maprj <- renderLeaflet({
       
       pop <- str_glue("<b>Municipio:</b> {sf_plot$Municipio} <br/>
-                <b>Confirmados:</b> {sf_plot$Confirmados} <br/>
-                <b>Mortes:</b> {sf_plot$Mortes} <br/>")
+               <b>Confirmados:</b> {sf_plot$Confirmados} <br/>
+              <b>Mortes:</b> {sf_plot$Mortes} <br/>")
       
       fill <- colorQuantile("YlOrRd", sf_plot$Confirmados, n=7)
       
@@ -241,7 +241,7 @@ table_world <- reactive(
            select(1,7) %>% 
             rename(Casos=Valor2) %>%
             arrange(desc(Casos)) %>% 
-            head(10),
+            head(20),
         rownames = FALSE,
         options = list(
             dom = 'frtp',
@@ -269,7 +269,7 @@ table_world <- reactive(
             rename(Obitos=Valor2) %>% 
             arrange(desc(Obitos))
         
-        data2  %>% head(10)
+        data2  %>% head(5)
     })
     
     output$curva <- renderPlotly({
