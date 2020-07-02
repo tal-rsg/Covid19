@@ -20,30 +20,75 @@ library(shinythemes)
 library(googlesheets4)
 library(httr)
 library(jsonlite)
-library(jsonlite)
 library(DT)
+library(sf)
 
 #lendo arquivos estado rj www.brasil.io
 
-get_rj = GET("https://brasil.io/api/dataset/covid19/caso_full/data?state=RJ&had_cases=True&page_size=10000")
+#get_rj = GET("https://brasil.io/api/dataset/covid19/caso_full/data?state=RJ&had_cases=True&page_size=10000")
+
+df_1 <- read_csv("https://data.brasil.io/dataset/covid19/caso_full.csv.gz")
 
 
-content_rj <- content(get_rj, "text", encoding = "utf-8")
+#content_rj <- content(get_rj, "text", encoding = "utf-8")
 
-json_rj <- fromJSON(content_rj,flatten = TRUE)
+#json_rj <- fromJSON(content_rj,flatten = TRUE)
 
-df_rj <- as_tibble(json_rj$results) %>% 
-    mutate(date = ymd(date))
+#df_rj <- as_tibble(json_rj$results) 
 
-df_rj %>% glimpse()
 
-df_rj %>% 
+df_rj_fil <- df_1 %>% select(city,last_available_confirmed, last_available_deaths, date, city_ibge_code) %>% 
+    filter(date == today()- days(1),
+           !city == "Importados/Indefinidos",
+           !city_ibge_code == 33) 
+
+
+df_rj_tot <- df_rj_fil %>% 
+    rename(Municipio = city) %>% 
+    rename(Confirmados = last_available_confirmed) %>% 
+    rename(Mortes = last_available_deaths) %>% 
+    rename(CD_GEOCMU = city_ibge_code) %>% 
+    mutate(CD_GEOCMU = CD_GEOCMU %>% as_factor())
+
+df_trps_conf <- df_rj %>% 
     filter(city %in% c("Três Rios", "Paraíba do Sul")) %>% 
     mutate(Diario = lag(last_available_confirmed),
-           Conf_daily=last_available_confirmed-Diario) %>% 
-    plot_ly(x = ~date, y = ~last_available_confirmed) %>%
-    add_lines(linetype = ~city) #%>% 
+           Conf_daily=last_available_confirmed-Diario)
+
+    #plot_ly(x = ~date, y = ~last_available_confirmed) %>%
+    #add_lines(linetype = ~city) %>% 
     #layout(yaxis = list(type = "log"))
+
+sf_rj <- st_read("data/rj_municipios/33MUE250GC_SIR.shp")
+
+df_rj_tot %>%  glimpse()
+
+sf_rj %>% glimpse()
+
+sf_plot <- df_rj_tot %>% 
+  left_join(sf_rj, by = "CD_GEOCMU") %>% 
+  st_as_sf()
+
+#pop <- str_glue("<b>Municipio:</b> {sf_plot$Municipio} <br/>
+#                <b>Confirmados:</b> {sf_plot$Confirmados} <br/>
+#                <b>Mortes:</b> {sf_plot$Mortes} <br/>")
+
+#fill <- colorQuantile("YlOrRd", sf_plot$Confirmados, n=7)
+
+base_map <- sf_plot %>%
+  leaflet() %>%
+  addTiles()  %>% 
+  setView(lat=-22.93, lng=-43.45 , zoom=7.5) %>%
+  addProviderTiles("Esri.WorldImagery") %>%
+  addPolygons(color = "lightblue", weight = 1, smoothFactor = 0.5,
+              opacity = 1.0, fillOpacity = 0.6,
+              fillColor= ~fill(Confirmados),
+              popup = pop,
+              highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                  bringToFront = TRUE))
+#sf_plot %>% glimpse()
+
+base_map
 
 
 #lendo arquivos mundiais
@@ -55,39 +100,39 @@ df_world_obt <- read_csv("https://data.humdata.org/hxlproxy/api/data-preview.csv
 
 
 #lendo arquivos no Google Sheets
-gs4_deauth()
-df_tr <- read_sheet("https://docs.google.com/spreadsheets/d/1fK3V_5Jy5om4J6drY5UG_ctnH18pyyVy7h3QAIQcPeI/edit#gid=1134744633")
+#gs4_deauth()
+#df_tr <- read_sheet("https://docs.google.com/spreadsheets/d/1fK3V_5Jy5om4J6drY5UG_ctnH18pyyVy7h3QAIQcPeI/edit#gid=1134744633")
 
 #df_tr <- read_csv("data/Dados TR - Plan1.csv")
 
-df_tr %>% glimpse()
+#df_tr %>% glimpse()
 
-df_tr2 <- df_tr %>% 
-    select(1,2) %>%
-    mutate(Diario = lag(Confirmados),
-           Conf_daily=Confirmados-Diario,
-           Cidade="Três Rios")
+#df_tr2 <- df_tr %>% 
+#    select(1,2) %>%
+#    mutate(Diario = lag(Confirmados),
+#           Conf_daily=Confirmados-Diario,
+#           Cidade="Três Rios")
 
 #Data= as.Date(mdy(Data)))
 
-df_tr2 %>%  glimpse()
+#df_tr2 %>%  glimpse()
 
 
-df_ps <- read_sheet("https://docs.google.com/spreadsheets/d/145m2NTHssbkoYjOBkL9sJOTsr3JiNI0YsbIHRhD8lpM/edit#gid=811385160", sheet = "Paraiba do sul")
+#df_ps <- read_sheet("https://docs.google.com/spreadsheets/d/145m2NTHssbkoYjOBkL9sJOTsr3JiNI0YsbIHRhD8lpM/edit#gid=811385160", sheet = "Paraiba do sul")
 
 #df_ps <- read.csv("data/Dados PS - Paraiba do sul.csv")
 
-df_ps2 <- df_ps %>% 
-    select(1,2) %>% 
-    mutate(Diario = lag(Confirmados),
-           Conf_daily=Confirmados-Diario,
-           Cidade="Paraiba do Sul")
+#df_ps2 <- df_ps %>% 
+#    select(1,2) %>% 
+#    mutate(Diario = lag(Confirmados),
+#           Conf_daily=Confirmados-Diario,
+#           Cidade="Paraiba do Sul")
            
 #Data= as.Date(mdy(Data)))
 
-df_ps2 %>% glimpse()
+#df_ps2 %>% glimpse()
 
-df_trps <- union_all(df_tr2, df_ps2)
+#df_trps <- union_all(df_tr2, df_ps2)
 
 df_world2 <- gather(df_world, 'Data', 'Valor', 5:length(df_world) )
 
@@ -152,7 +197,7 @@ df_obitos <- df_world_obt4 %>%
     mutate(Diario = lag(Casos),
            Conf_daily=Casos-Diario)
 
-# Define server logic required to draw a histogram
+# saida do mapa mundial
 shinyServer(function(input, output) {
 
     output$map <- renderLeaflet({ 
@@ -177,6 +222,17 @@ shinyServer(function(input, output) {
             # utilizando o sqrt para melhor visualizar os lugares com menos casos
             addCircles(radius=~sqrt(as.double(Valor)) * 1000, weight=0.8, popup=~pops, color = c('red'))
         #addCircleMarkers(radius = ~sqrt(as.double(Total)), weight=1, color = c('red'), popup=~pops)
+    })
+    
+    output$maprj <- renderLeaflet({
+      
+      pop <- str_glue("<b>Municipio:</b> {sf_plot$Municipio} <br/>
+                <b>Confirmados:</b> {sf_plot$Confirmados} <br/>
+                <b>Mortes:</b> {sf_plot$Mortes} <br/>")
+      
+      fill <- colorQuantile("YlOrRd", sf_plot$Confirmados, n=7)
+      
+      base_map
     })
     
 table_world <- reactive(
@@ -241,14 +297,25 @@ table_world <- reactive(
     })
     
     output$curvatrps <- renderPlotly({
-        plot_ly(df_trps, x = ~Data, y = ~Confirmados) %>%
-            add_lines(linetype = ~Cidade)
+      #  plot_ly(df_trps_conf, x = ~Data, y = ~Confirmados) %>%
+       #     add_lines(linetype = ~Cidade)
+       df_trps_conf %>%
+        mutate(date = str_sub(date, start = 6, end = 10)) %>% 
+        plot_ly(x = ~(date), y = ~last_available_confirmed) %>%
+            add_lines(linetype = ~city) #%>% 
+            #layout(yaxis = list(type = "log"))
         
     })
     
     output$logtrps <- renderPlotly({
-        plot_ly(df_trps, x = ~Data, y = ~Confirmados) %>%
-            add_lines(linetype = ~Cidade) %>% 
-            layout(df_trps, yaxis = list(type = "log"))
+       # plot_ly(df_trps_conf, x = ~Data, y = ~Confirmados) %>%
+        #    add_lines(linetype = ~Cidade) %>% 
+         #   layout(df_trps_conf, yaxis = list(type = "log"))
+        
+        df_trps_conf %>%
+            mutate(date = str_sub(date, start = 6, end = 10)) %>% 
+            plot_ly(x = ~date, y = ~last_available_confirmed) %>%
+            add_lines(linetype = ~city) %>% 
+            layout(yaxis = list(type = "log"))
     })
 })

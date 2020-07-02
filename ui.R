@@ -33,8 +33,11 @@ library(plotly)
                                       h2("Curva Logarítimica"),
                                       plotlyOutput("loga")
                              ),
-                             tabPanel("TR e PS", 
-                                      h2("Casos nos Municípios de Três Rios e Paraíba do Sul"),
+                             tabPanel("Rio de Janeiro",
+                                      h2("Confirmados e Óbitos no Estado do Rio"),
+                                      h4("Base de dados: https://data.brasil.io/dataset/covid19/_meta/list.html"),
+                                      leafletOutput("maprj"),
+                                      h4("Casos nos Municípios de Três Rios e Paraíba do Sul"),
                                       fluidRow(
                                       column(width = 6,h4("Casos diários", align = "center"), plotlyOutput("curvatrps")),
                                       column(width = 6,h4("Logarítimica em TR e PS", align = "center"),   plotlyOutput("logtrps"))
