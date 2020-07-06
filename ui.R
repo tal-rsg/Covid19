@@ -36,10 +36,13 @@ library(plotly)
                              tabPanel("Rio de Janeiro",
                                       h2("Confirmados e Óbitos no Estado do Rio"),
                                       h4("Base de dados: https://data.brasil.io/dataset/covid19/_meta/list.html"),
-                                      leafletOutput("maprj"),
+                                      fluidRow(
+                                        column(width = 6, h4("Casos no Estado do RIo", align = "center"), leafletOutput("maprj")),
+                                        column(width = 6, h4("Principais Estados BR", align = "center"), plotlyOutput("graphestados"))
+                                      ),
                                       h4("Casos nos Municípios de Três Rios e Paraíba do Sul"),
                                       fluidRow(
-                                      column(width = 6,h4("Casos diários", align = "center"), plotlyOutput("curvatrps")),
+                                      column(width = 6,h4("Casos diários em TR e PS", align = "center"), plotlyOutput("curvatrps")),
                                       column(width = 6,h4("Logarítimica em TR e PS", align = "center"),   plotlyOutput("logtrps"))
                              
                      )

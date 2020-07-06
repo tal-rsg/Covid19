@@ -22,6 +22,7 @@ library(httr)
 library(jsonlite)
 library(DT)
 library(sf)
+library(dplyr)
 
 #lendo arquivos estado rj www.brasil.io
 
@@ -30,19 +31,35 @@ library(sf)
 df_1 <- read_csv("https://data.brasil.io/dataset/covid19/caso_full.csv.gz")
 
 
+
+#df_1 %>% filter(is_repeated == FALSE, place_type == "state") %>% 
+#  select(state, epidemiological_week, last_available_confirmed) %>% 
+#  group_by(state, epidemiological_week) %>% 
+#  summarise(Casos = sum(last_available_confirmed)) %>% 
+#  arrange(desc(Casos)) %>% 
+#  head(10)
+
+#df_1 %>% glimpse()
+
+#df_1 %>% distinct(city)
+
+#df_1 %>% glimpse()
+
 #content_rj <- content(get_rj, "text", encoding = "utf-8")
 
 #json_rj <- fromJSON(content_rj,flatten = TRUE)
 
 #df_rj <- as_tibble(json_rj$results) 
 
-
-df_rj_fil <- df_1 %>% select(city,last_available_confirmed, last_available_deaths, date, city_ibge_code) %>% 
+#filtrando o estado do rj
+df_rj_fil <- df_1 %>% select(city,last_available_confirmed, last_available_deaths, date, city_ibge_code, state) %>% 
     filter(date == today()- days(1),
            !city == "Importados/Indefinidos",
-           !city_ibge_code == 33) 
+           !city_ibge_code == 33,
+           state == "RJ") 
 
 
+#ajustando descrição de campos
 df_rj_tot <- df_rj_fil %>% 
     rename(Municipio = city) %>% 
     rename(Confirmados = last_available_confirmed) %>% 
@@ -50,14 +67,10 @@ df_rj_tot <- df_rj_fil %>%
     rename(CD_GEOCMU = city_ibge_code) %>% 
     mutate(CD_GEOCMU = CD_GEOCMU %>% as_factor())
 
+#filtrando cidades do interior
 df_trps_conf <- df_1 %>% 
-    filter(city %in% c("Três Rios", "Paraíba do Sul")) %>% 
-    mutate(Diario = lag(last_available_confirmed),
-           Conf_daily=last_available_confirmed-Diario)
-
-    #plot_ly(x = ~date, y = ~last_available_confirmed) %>%
-    #add_lines(linetype = ~city) %>% 
-    #layout(yaxis = list(type = "log"))
+    filter(city %in% c("Três Rios", "Paraíba do Sul"), is_last = TRUE) %>% 
+    rename(Confirmados = last_available_confirmed)
 
 sf_rj <- st_read("data/rj_municipios/33MUE250GC_SIR.shp")
 
@@ -78,7 +91,7 @@ fill <- colorQuantile("YlOrRd", sf_plot$Confirmados, n=7)
 base_map <- sf_plot %>%
   leaflet() %>%
   addTiles()  %>% 
-  setView(lat=-22.93, lng=-43.45 , zoom=7.5) %>%
+  setView(lat=-22.93, lng=-43.45 , zoom=6.5) %>%
   addProviderTiles("Esri.WorldImagery") %>%
   addPolygons(color = "lightblue", weight = 1, smoothFactor = 0.5,
               opacity = 1.0, fillOpacity = 0.6,
@@ -241,7 +254,7 @@ table_world <- reactive(
            select(1,7) %>% 
             rename(Casos=Valor2) %>%
             arrange(desc(Casos)) %>% 
-            head(20),
+            head(30),
         rownames = FALSE,
         options = list(
             dom = 'frtp',
@@ -301,7 +314,7 @@ table_world <- reactive(
        #     add_lines(linetype = ~Cidade)
        df_trps_conf %>%
         mutate(date = str_sub(date, start = 6, end = 10)) %>% 
-        plot_ly(x = ~(date), y = ~last_available_confirmed) %>%
+        plot_ly(x = ~(date), y = ~Confirmados) %>%
             add_lines(linetype = ~city) #%>% 
             #layout(yaxis = list(type = "log"))
         
@@ -314,8 +327,23 @@ table_world <- reactive(
         
         df_trps_conf %>%
             mutate(date = str_sub(date, start = 6, end = 10)) %>% 
-            plot_ly(x = ~date, y = ~last_available_confirmed) %>%
+            plot_ly(x = ~date, y = ~Confirmados) %>%
             add_lines(linetype = ~city) %>% 
             layout(yaxis = list(type = "log"))
+      
+    
+    })
+    
+    output$graphestados <- renderPlotly({
+      
+      graph_rj <- df_1 %>% 
+        filter(is_repeated == FALSE, place_type == "state", state %in% c("SP", "RJ", "CE", "MG", "AM", "BA")) %>% 
+        select(state, date, last_available_confirmed) %>% 
+        arrange(desc(last_available_confirmed)) %>% 
+        plot_ly( x = ~date, y = ~last_available_confirmed) %>%
+        add_lines(linetype = ~state)
+      
+      graph_rj
+      
     })
 })
