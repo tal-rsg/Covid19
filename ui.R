@@ -25,13 +25,15 @@ library(plotly)
                              tabPanel("World",
                                       h2("Casos pelo mundo"),
                                       h4("Base de dados: https://data.humdata.org/dataset/novel-coronavirus-2019-ncov-cases"),
-                                      DT::dataTableOutput("table"),
-                                      h2("Mapa"),
-                                      leafletOutput("map"),
-                                      h2("Curva"),
-                                      plotlyOutput("curva"),
-                                      h2("Curva Logarítimica"),
-                                      plotlyOutput("loga")
+                                      fluidRow(
+                                        column(width = 6, h4("Casos no Mundo", align = "center"), DT::dataTableOutput("table")),
+                                        column(width = 6, h4("Mapa Mundo", align = "center"), leafletOutput("map"))
+                                        ),
+                                      fluidRow(
+                                        column(width = 6, h4("Curva Crescimento", align= "center"), plotlyOutput("curva")),
+                                        column(width = 6, h4("Curva Logarítimica", align = "center"),plotlyOutput("loga"))
+                                      )
+                                      
                              ),
                              tabPanel("Rio de Janeiro",
                                       h2("Confirmados e Óbitos no Estado do Rio"),

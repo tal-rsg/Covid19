@@ -30,7 +30,19 @@ library(dplyr)
 
 df_1 <- read_csv("https://data.brasil.io/dataset/covid19/caso_full.csv.gz")
 
+df_1 %>% glimpse()
 
+graph_rj <- df_1 %>%
+  filter(place_type == "state",
+         date == today()- days(1),
+         is.na(city)) %>% 
+  select(state, last_available_confirmed) %>% 
+  rename(`Total Casos` = last_available_confirmed) %>% 
+  arrange(desc(`Total Casos`)) %>% 
+  head(5) %>%
+  plot_ly(x = ~state, y = ~`Total Casos`) %>%
+  add_bars(linetype = ~state)
+  
 
 #df_1 %>% filter(is_repeated == FALSE, place_type == "state") %>% 
 #  select(state, epidemiological_week, last_available_confirmed) %>% 
@@ -52,8 +64,9 @@ df_1 <- read_csv("https://data.brasil.io/dataset/covid19/caso_full.csv.gz")
 #df_rj <- as_tibble(json_rj$results) 
 
 #filtrando o estado do rj
-df_rj_fil <- df_1 %>% select(city,last_available_confirmed, last_available_deaths, date, city_ibge_code, state) %>% 
-    filter(date == today()- days(1),
+df_rj_fil <- df_1 %>% 
+  select(city,last_available_confirmed, last_available_deaths, date, city_ibge_code, state) %>%
+  filter(date == today()- days(1),
            !city == "Importados/Indefinidos",
            !city_ibge_code == 33,
            state == "RJ") 
@@ -336,12 +349,12 @@ table_world <- reactive(
     
     output$graphestados <- renderPlotly({
       
-      graph_rj <- df_1 %>% 
-        filter(is_repeated == FALSE, place_type == "state", state %in% c("SP", "RJ", "CE", "MG", "AM", "BA")) %>% 
-        select(state, date, last_available_confirmed) %>% 
-        arrange(desc(last_available_confirmed)) %>% 
-        plot_ly( x = ~date, y = ~last_available_confirmed) %>%
-        add_lines(linetype = ~state)
+ #     graph_rj <- df_1 %>% 
+#        filter(is_repeated == FALSE, place_type == "state", state %in% c("SP", "RJ", "CE", "MG", "AM", "BA")) %>% 
+ #       select(state, date, last_available_confirmed) %>% 
+  #      arrange(desc(last_available_confirmed)) %>% 
+  #      plot_ly( x = ~date, y = ~last_available_confirmed) %>%
+  #      add_lines(linetype = ~state)
       
       graph_rj
       
