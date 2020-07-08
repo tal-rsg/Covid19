@@ -30,19 +30,7 @@ library(dplyr)
 
 df_1 <- read_csv("https://data.brasil.io/dataset/covid19/caso_full.csv.gz")
 
-df_1 %>% glimpse()
 
-graph_rj <- df_1 %>%
-  filter(place_type == "state",
-         date == today()- days(1),
-         is.na(city)) %>% 
-  select(state, last_available_confirmed) %>% 
-  rename(`Total Casos` = last_available_confirmed) %>% 
-  arrange(desc(`Total Casos`)) %>% 
-  head(5) %>%
-  plot_ly(x = ~state, y = ~`Total Casos`) %>%
-  add_bars(linetype = ~state)
-  
 
 #df_1 %>% filter(is_repeated == FALSE, place_type == "state") %>% 
 #  select(state, epidemiological_week, last_available_confirmed) %>% 
@@ -70,6 +58,44 @@ df_rj_fil <- df_1 %>%
            !city == "Importados/Indefinidos",
            !city_ibge_code == 33,
            state == "RJ") 
+
+graph_pop <- df_1 %>%
+  filter(date == today()- days(1),
+         !city == "Importados/Indefinidos",
+         !city_ibge_code == 33,
+         state == "RJ",
+         estimated_population_2019 <= 90000) %>%
+  rename('Total Casos' = last_available_confirmed) %>% 
+  arrange(desc(estimated_population_2019)) %>%
+  head(10) %>%
+  plot_ly(x = ~`Total Casos`, y = ~city, showlegend = FALSE) %>%
+  add_bars(linetype = ~city)
+  
+
+#gráfico rj
+
+#graph_rj <- df_1 %>%
+#  filter(place_type == "state",
+#        date == today()- days(1),
+#         is.na(city)) %>% 
+#  select(state, last_available_confirmed) %>% 
+#  rename(`Total Casos` = last_available_confirmed) %>% 
+#  arrange(desc(`Total Casos`)) %>% 
+#  head(5) %>%
+#  plot_ly(x = ~state, y = ~`Total Casos`) %>%
+#  add_bars(linetype = ~state)
+
+graph_rj <- df_rj_fil %>%
+  arrange(desc(last_available_confirmed)) %>% 
+  rename(`Total Casos` = last_available_confirmed) %>%
+  mutate(Municipios = factor(city, levels = unique(city)[order(`Total Casos`, decreasing = FALSE)])) %>% 
+  head(10) %>%
+  plot_ly(x = ~`Total Casos`, y = ~Municipios, showlegend=FALSE ) %>%
+  add_bars(linetype = ~city)
+  
+
+#data$Animals <- factor(data$Animals, levels = unique(data$Animals)[order(data$Count, decreasing = TRUE)])
+  
 
 
 #ajustando descrição de campos
@@ -338,11 +364,13 @@ table_world <- reactive(
         #    add_lines(linetype = ~Cidade) %>% 
          #   layout(df_trps_conf, yaxis = list(type = "log"))
         
-        df_trps_conf %>%
-            mutate(date = str_sub(date, start = 6, end = 10)) %>% 
-            plot_ly(x = ~date, y = ~Confirmados) %>%
-            add_lines(linetype = ~city) %>% 
-            layout(yaxis = list(type = "log"))
+        #df_trps_conf %>%
+         #   mutate(date = str_sub(date, start = 6, end = 10)) %>% 
+          #  plot_ly(x = ~date, y = ~Confirmados) %>%
+          #  add_lines(linetype = ~city) %>% 
+          #  layout(yaxis = list(type = "log"))
+      
+      graph_pop
       
     
     })

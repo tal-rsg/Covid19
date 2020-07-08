@@ -40,12 +40,13 @@ library(plotly)
                                       h4("Base de dados: https://data.brasil.io/dataset/covid19/_meta/list.html"),
                                       fluidRow(
                                         column(width = 6, h4("Casos no Estado do RIo", align = "center"), leafletOutput("maprj")),
-                                        column(width = 6, h4("Principais Estados BR", align = "center"), plotlyOutput("graphestados"))
+                                        column(width = 6, h4("Top 10 + Confirmados", align = "center"), plotlyOutput("graphestados"))
                                       ),
-                                      h4("Casos nos Municípios de Três Rios e Paraíba do Sul"),
+                                      h2("Casos nos municípios com até 90 mil habitantes"),
                                       fluidRow(
-                                      column(width = 6,h4("Casos diários em TR e PS", align = "center"), plotlyOutput("curvatrps")),
-                                      column(width = 6,h4("Logarítimica em TR e PS", align = "center"),   plotlyOutput("logtrps"))
+                                        column(width = 6,h4("Top 10 + Confirmadados Populaçao até 90 mil ", align = "center"),   plotlyOutput("logtrps")),
+                                        column(width = 6,h4("Casos diários em TR e PS", align = "center"), plotlyOutput("curvatrps"))
+                                      
                              
                      )
                          )
