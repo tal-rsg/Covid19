@@ -298,7 +298,11 @@ table_world <- reactive(
         options = list(
             dom = 'frtp',
             style = "bootstrap",
-            lengthMenu = c(seq(5, 150, 5))
+            lengthMenu = c(seq(5, 150, 5)),
+            initComplete = JS(
+              "function(settings, json) {",
+              "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
+              "}")
             
         )
     ) %>% formatStyle (c("Country", "Casos"), color = 'white', backgroundColor = '#988380', fontWeight = 'bold')
